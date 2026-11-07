@@ -5,7 +5,11 @@ import typing
 
 
 class Color:
-    """A color string with conversion methods."""
+    """A color string with conversion methods.
+
+    The string is a CSS color name, including transparent, hex as #rgb, #rgba, #rrggbb or #rrggbbaa, rgb(r, g, b), or
+    rgba(r, g, b, a), with red, green and blue from 0 to 255 and the alpha from 0 to 1, as in CSS.
+    """
 
     def __init__(self, color_str: typing.Optional[typing.Union[Color, str]] = None) -> None:
         self.color_str: typing.Optional[str]
@@ -21,11 +25,16 @@ class Color:
 
     def __eq__(self, other: typing.Any) -> bool:
         if isinstance(other, Color):
-            return self.to_rgba_255() == other.to_rgba_255()
+            return self.__get_rgba_255() == other.__get_rgba_255()
         return False
 
     def __hash__(self) -> int:
-        return hash(self.to_rgba_255())
+        return hash(self.__get_rgba_255())
+
+    # the alpha is compared from 0 to 255, so that a color equals its hex form.
+    def __get_rgba_255(self) -> typing.Tuple[int, int, int, int]:
+        red, green, blue, alpha = self.to_rgba()
+        return red, green, blue, round(alpha * 255)
 
     @property
     def is_valid(self) -> bool:
@@ -42,6 +51,8 @@ class Color:
         if not color_str:
             return Color()
         color_str = color_str.strip().replace(" ", "")
+        if color_str == "transparent":
+            return Color("#000000")
         c = re.split(r"rgba\((\d+),(\d+),(\d+),([\d.]+)\)", color_str)
         if len(c) > 1:
             return Color(f"#{int(c[1]):02x}{int(c[2]):02x}{int(c[3]):02x}")
@@ -50,11 +61,11 @@ class Color:
             return Color(f"#{int(c[1]):02x}{int(c[2]):02x}{int(c[3]):02x}")
         if color_str.startswith("#"):
             if len(color_str) == 9:
-                return Color(f"#{color_str.lower()[3:]}")
+                return Color(color_str.lower()[:7])
             if len(color_str) == 7:
                 return Color(color_str.lower())
             if len(color_str) == 5:
-                return Color(f"#{color_str.lower()[2:]}")
+                return Color(color_str.lower()[:4])
         return Color(color_str)
 
     @property
@@ -66,41 +77,49 @@ class Color:
         return Color(svg_color_reverse_map.get(hex_color_without_alpha, hex_color_without_alpha) if hex_color_without_alpha else None)
 
     def to_color_with_alpha(self, alpha: float) -> Color:
+        """Return the color with the alpha, from 0 to 1, as rgba(r, g, b, a)."""
         hex7_color = self.__hex7_color()
-        return Color(f"#{min(255, max(0, int(round(256 * alpha)))):02x}" + hex7_color[1:])
+        red, green, blue = (int(hex7_color[i:i + 2], 16) for i in (1, 3, 5))
+        return Color(f"rgba({red}, {green}, {blue}, {round(min(1.0, max(0.0, float(alpha))), 3)})")
 
-    def to_rgba_255(self) -> typing.Tuple[int, int, int, int]:
+    def to_rgba(self) -> typing.Tuple[int, int, int, float]:
+        """Return the red, green and blue of the color, each from 0 to 255, and then its alpha, from 0 to 1, as CSS rgba() does.
+
+        The alpha of an rgba() string is returned as given, limited to 0 to 1. A string which is not a color this class
+        knows gives opaque white.
+        """
+        if self.color_str and len(c := re.split(r"rgba\((\d+),(\d+),(\d+),([\d.]+)\)", self.color_str)) > 1:
+            return int(c[1]), int(c[2]), int(c[3]), min(1.0, float(c[4]))
         hex_color = self.hex_color_str
-        if hex_color and len(hex_color) == 4:
-            rgb = tuple(int(hex_color[i:i + 1], 16) * 17 for i in (1, 2, 3))
-            return rgb[0], rgb[1], rgb[2], 255
-        elif hex_color and len(hex_color) == 5:
-            rgba = tuple(int(hex_color[i:i + 1], 16) * 17 for i in (1, 2, 3, 4))
-            return rgba[0], rgba[1], rgba[2], rgba[3]
-        elif hex_color and len(hex_color) == 7:
-            rgb = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
-            return rgb[0], rgb[1], rgb[2], 255
-        elif hex_color and len(hex_color) == 9:
-            rgba = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5, 7))
-            return rgba[0], rgba[1], rgba[2], rgba[3]
+        if hex_color and len(hex_color) in (4, 5):
+            # each digit of #rgb or #rgba stands for itself repeated.
+            components = [int(digit, 16) * 17 for digit in hex_color[1:]]
+        elif hex_color and len(hex_color) in (7, 9):
+            components = [int(hex_color[i:i + 2], 16) for i in range(1, len(hex_color), 2)]
         else:
-            return 255, 255, 255, 255
+            return 255, 255, 255, 1.0
+        red, green, blue, alpha = components if len(components) == 4 else components + [255]
+        return red, green, blue, alpha / 255
 
+    # the red, green and blue of the color, each from 0 to 255, without its alpha.
     def to_rgb_255(self) -> typing.Tuple[int, int, int]:
-        return self.to_rgba_255()[:-1]
+        red, green, blue, alpha = self.to_rgba()
+        return red, green, blue
 
     def __hex_color(self, color_str: typing.Optional[str]) -> typing.Optional[str]:
         if not color_str:
             return None
         c = re.split(r"rgba\((\d+),(\d+),(\d+),([\d.]+)\)", color_str)
         if len(c) > 1:
-            return f"#{int(255 * float(c[4])):02x}{int(c[1]):02x}{int(c[2]):02x}{int(c[3]):02x}"
+            return f"#{int(c[1]):02x}{int(c[2]):02x}{int(c[3]):02x}{round(255 * min(1.0, float(c[4]))):02x}"
         c = re.split(r"rgb\((\d+),(\d+),(\d+)\)", color_str)
         if len(c) > 1:
             return f"#{int(c[1]):02x}{int(c[2]):02x}{int(c[3]):02x}"
         if color_str.startswith("#"):
             if len(color_str) in (9, 7, 5, 4):
                 return color_str.lower()
+        if color_str == "transparent":
+            return "#00000000"
         return svg_color_map.get(color_str, color_str)
 
     def __hex7_color(self) -> str:
