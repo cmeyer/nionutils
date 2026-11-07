@@ -44,19 +44,19 @@ class TestColorClass(unittest.TestCase):
         self.assertEqual("#ffd8bfd8", Color.Color("thistle").to_color_with_alpha(1.00).color_str)
         self.assertEqual("#00d8bfd8", Color.Color("thistle").to_color_with_alpha(0.00).color_str)
         self.assertEqual("#c0d8bfd8", Color.Color("#d8bfd8").to_color_with_alpha(0.75).color_str)
-        self.assertEqual("#80204060", Color.Color("#246").to_color_with_alpha(0.50).color_str)
-        self.assertEqual("#ff204060", Color.Color("#246").to_color_with_alpha(1.50).color_str)
-        self.assertEqual("#00204060", Color.Color("#246").to_color_with_alpha(-1.50).color_str)
+        self.assertEqual("#80224466", Color.Color("#246").to_color_with_alpha(0.50).color_str)
+        self.assertEqual("#ff224466", Color.Color("#246").to_color_with_alpha(1.50).color_str)
+        self.assertEqual("#00224466", Color.Color("#246").to_color_with_alpha(-1.50).color_str)
 
     def test_matches_without_alpha(self) -> None:
         self.assertTrue(Color.Color("thistle").matches_without_alpha(Color.Color("#d8bfd8")))
         self.assertTrue(Color.Color("thistle").matches_without_alpha(Color.Color("rgb(216, 191, 216)")))
         self.assertTrue(Color.Color("thistle").matches_without_alpha(Color.Color("rgba(216, 191, 216, 0.5)")))
         self.assertTrue(Color.Color("rgb(216, 191, 216)").matches_without_alpha(Color.Color("rgba(216, 191, 216, 0.5)")))
-        self.assertTrue(Color.Color("#123").matches_without_alpha(Color.Color("#102030")))
-        self.assertTrue(Color.Color("#123").matches_without_alpha(Color.Color("#80102030")))
-        self.assertTrue(Color.Color("#8123").matches_without_alpha(Color.Color("#80102030")))
-        self.assertTrue(Color.Color("#8123").matches_without_alpha(Color.Color("#102030")))
+        self.assertTrue(Color.Color("#123").matches_without_alpha(Color.Color("#112233")))
+        self.assertTrue(Color.Color("#123").matches_without_alpha(Color.Color("#80112233")))
+        self.assertTrue(Color.Color("#8123").matches_without_alpha(Color.Color("#80112233")))
+        self.assertTrue(Color.Color("#8123").matches_without_alpha(Color.Color("#112233")))
 
     def test_color_equals(self) -> None:
         self.assertEqual(Color.Color("thistle"), Color.Color("#d8bfd8"))

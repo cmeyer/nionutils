@@ -108,7 +108,8 @@ class Color:
             return "#000000"
         hex_color_str = self.to_color_without_alpha().hex_color_str or "#000000"
         if len(hex_color_str) == 4:
-            return f"#{hex(int(hex_color_str[1], 16) * 16)[2:]}{hex(int(hex_color_str[2], 16) * 16)[2:]}{hex(int(hex_color_str[3], 16) * 16)[2:]}"
+            # each digit of #rgb stands for itself repeated, as in #rrggbb.
+            return "#" + "".join(digit * 2 for digit in hex_color_str[1:])
         assert len(hex_color_str) == 7
         return hex_color_str
 
