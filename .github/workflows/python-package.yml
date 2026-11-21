@@ -19,12 +19,12 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     uses: nion-software/github-workflows/.github/workflows/build-python-package.yml@main
     with:
-      python-versions: "['3.12', '3.13', '3.14', '3.14t']"
+      python-versions: "['3.14', '3.14t']"
   build-python-package-manual-default:
     if: github.event_name == 'workflow_dispatch' && inputs.python_versions == ''
     uses: nion-software/github-workflows/.github/workflows/build-python-package.yml@main
     with:
-      python-versions: "['3.12', '3.13', '3.14', '3.14t']"
+      python-versions: "['3.14', '3.14t']"
   build-python-package-manual:
     if: github.event_name == 'workflow_dispatch' && inputs.python_versions != ''
     uses: nion-software/github-workflows/.github/workflows/build-python-package.yml@main
